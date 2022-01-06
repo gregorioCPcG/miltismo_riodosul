@@ -1,0 +1,121 @@
+---
+title: "Miltismo histórico"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+```{r message=FALSE, warning=FALSE}
+library(readxl)
+dados <- read_excel("dados.xlsx")
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+
+```{r}
+str(dados)
+```
+
+Esse vídeo tem por objetivo analisar os padrões históricos territoriais de votação doda cidade originária do político regional mais influente de uma região catarinense. Trata-se de Milton Hobus e os candidatos apoiados pelo mesmo durante as disputas a prefeito na cidade de Rio do Sul/SC 
+
+foram selecionados 19 bairros - 96% dos eleitores (em média)- omitimos alguns por mudanças de registro do TSE
+
+
+2004 - Primeira vitória de Milton - apertadissíma por 144 votos - opositor Jaílson (PT)- esquerda
+2008 não entrou pelo fato de que o adversário de Hobus na releição foi impugnado - foi acachapante - se uniu ao MDB
+2012 - O candidato apoiado por Hobus é derrotado pelo vice de Milton, Gariba (do MDB, unido ao PT)
+2016 - O candidato apoiado (Thomé) por Hobus vence Gariba (MDB, rompido com o vice do PT, de Liz que ficou em terceiro)
+2020 - Thomé reeleito, mas com menor votação da série(menor até que 2012), além do mesmo opositor a esquerda (de Liz agora no PDT), enfrenta três opositores à direita (com discursos que aproveitam a onda bolsonarista e lava-jatista). Thomé apresenta um discurso mais de defender o mandato (se elege, mas em parte pelos três candidatos à direita terem dividido os votos, já que se unidos somaram mais votos)
+
+Minha suspeita é que dado a mudança no perfil dos adversários, não há uma continuidade entre 2004 e 2020. O peril territorial dos votos sofreu alterações
+
+
+# testes correlação
+
+*P-value* menor que 0.05 - signficativo a 95%
+
+*correlação de Pearson:*
+
+mais perto de -1 relacionamento negativo
+
+mais próximo de zero : sem relacionamento
+
+mais perto de +1 : relacionamento positivo
+
+
+```{r}
+# 2020 x 2016
+cor.test(dados$J.Thome2020, dados$J.Thome2016)
+```
+
+```{r}
+# 2016 x 2012
+cor.test(dados$J.Thome2016, dados$J.Teixeira2012)
+```
+
+```{r}
+# 2012 X 2004
+cor.test(dados$J.Teixeira2012, dados$M.Hobus2004)
+```
+
+# matriz de correlação - anos diferentes
+
+```{r}
+matriz <- subset(dados, select = c(J.Thome2020, J.Thome2016,J.Teixeira2012,
+                                     M.Hobus2004)) %>% na.omit()
+matriz <- cor(matriz)
+
+require(corrplot)
+corrplot(matriz, method="number", 
+         type="upper", order="hclust",
+         tl.col="black", tl.srt=45)
+```
+
+#2004 e 2020 sem correlação
+
+```{r}
+cor.test(dados$J.Thome2020, dados$M.Hobus2004)
+```
+
+# Uma conexão que foi se perdendo
+
+```{r}
+# 2004 e 2012
+a <- ggplot(dados, aes(M.Hobus2004, J.Teixeira2012))
+a + geom_text(aes(label = Bairro))
+a <- a+ geom_point()
+```
+
+
+
+```{r}
+# 2004 e 2016
+# cor 0.57
+a <- ggplot(dados, aes(M.Hobus2004, J.Thome2016))
+a + geom_text(aes(label = Bairro))
+a <- a+ geom_point()
+```
+
+```{r}
+# 2004 e 2020
+# cor 0.004
+a <- ggplot(dados, aes(M.Hobus2004, J.Thome2020))
+a + geom_text(aes(label = Bairro))
+a <- a+ geom_point()
+```
+
+```{r}
+model <- lm(J.Thome2020 ~ J.Thome2016 + J.Teixeira2012 + M.Hobus2004, data = dados)
+library(coefplot)
+coefplot(model, intercept = FALSE)
+```
+na imagem acima nos questionamos sobre o que explica a votação de 2020 em Thomé  e percebemos que a distância no tempo vai retirando correlação positiva. Chegamos ao ponto que em 2004 há correlação estatisticamente significante e negativa, ou seja os padrões de votação de Hobus em 2004 prevem negativamente a votação de 2020.
+
+# Conclusão
+
+
+A suspeita/hipótese apontada no início do vídeo é confirmada. Ou seja, o padrão de votação sofre alterações significativas. Minha suspeita é de que a mudança no perfil dos adversários contribuiu para essa mudança. Isso mostra também a capacidade de resiliência do miltismo na cidade que soube se adptar (menos em 2012) e vencer 4 de 5 eleições na cidade.
+
